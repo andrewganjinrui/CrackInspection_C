@@ -1,0 +1,77 @@
+// CrackInspection.cpp : 定义控制台应用程序的入口点。
+//
+
+#include "stdafx.h"
+#include "CrackDetect.h"
+#include <iostream>
+#include <opencv.hpp>
+
+using namespace std;
+using namespace cv;
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	CCrackDetect CK;
+
+	Mat img = imread("D:\\HH.bmp");
+	if (img.empty())
+		return -1;
+	if (img.channels() != 1)
+	{
+		cvtColor(img, img, CV_RGB2GRAY);
+	}
+	
+	/*******************************************************准备参数************************************************/
+	Mat outputflag;
+	VecPts pts_seq;
+	StructParams lineParams;
+	pts_seq.push_back(Point(8, 167));
+	pts_seq.push_back(Point(1108, 160));
+	pts_seq.push_back(Point(1302, 147));
+	pts_seq.push_back(Point(1995, 106));
+	pts_seq.push_back(Point(2486, 88));
+	pts_seq.push_back(Point(3251, 30));
+	
+	/*******************************************************处理************************************************/
+	CK.crackptsCompute(img, pts_seq, outputflag, lineParams);
+	/*******************************************************获得的参数************************************************/
+	cout << "length:\n" << lineParams.lengthLine << endl;
+	cout << "width_avg:" << lineParams.width_avg << "  width_max:" << lineParams.width_max << 
+		"  width_min:" << lineParams.width_min << "  width_std:" << lineParams.width_std << 
+		"  width_median:" << lineParams.width_median << endl;
+	
+	/*******************************************************显示************************************************/
+	Mat finaloutcome = Mat(img.size(), CV_8UC3);
+	unsigned char* myflag = (unsigned char*)outputflag.data;
+	unsigned char* myImg = (unsigned char*)img.data;
+	unsigned char* myfinal;
+	for (int i = 0; i < img.rows; i++)
+	{
+		myfinal = finaloutcome.ptr<unsigned char>(i);
+		for (int j = 0; j < img.cols; j++)
+		{
+			if (*myflag == 1)
+			{
+				myfinal[3 * j] = 0;
+				myfinal[3 * j + 1] = 0;
+				myfinal[3 * j + 2] = 255;
+			}
+			else
+			{
+				myfinal[3 * j] = *myImg;
+				myfinal[3 * j + 1] = *myImg;
+				myfinal[3 * j + 2] = *myImg;
+			}
+			myflag++;
+			myImg++;
+		}
+	}
+	
+
+	Mat finalcome;
+	resize(finaloutcome, finalcome, Size(), 0.3, 0.3);
+	imshow("image", finalcome);
+	if (waitKey(0) & 0xff == 27)
+	destroyAllWindows();
+}
+
